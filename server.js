@@ -284,7 +284,6 @@ body{font-family:"Segoe UI",system-ui,sans-serif;background:#0f0f13;color:#e0e0e
 .field input:focus,.field textarea:focus{border-color:#FF1493}
 .field textarea{min-height:100px;resize:vertical;font-family:inherit;line-height:1.5}
 .field .hint{font-size:10px;color:#444;margin-top:4px}
-.field .hint b{color:#f0a030}.field .hint code{background:#1e1e2e;padding:1px 4px;border-radius:3px;color:#f0a030}
 .img-preview{max-width:100%;max-height:140px;border-radius:6px;margin-top:8px;
   display:none;border:1px solid #2a2a3a}
 .actions{display:flex;gap:8px;margin-top:4px}
@@ -535,17 +534,7 @@ function renderEditor() {
   }
 
   const val = nsData[currentKey] ?? '';
-  const looksLikeURL = /^https?:\/\//.test(val);
-  // Detect ImgBB share pages vs direct links — ibb.co/xxx is a page, i.ibb.co/xxx is direct
-  const isImgbbPage  = /^https?:\/\/ibb\.co\//i.test(val);
-  const isDirectImage = /\.(png|jpe?g|gif|webp|svg|bmp)(\?.*)?$/i.test(val) ||
-                        /^https?:\/\/i\.ibb\.co\//i.test(val) ||
-                        /^https?:\/\/i\.imgur\.com\//i.test(val);
-  const urlWarning = looksLikeURL && !isDirectImage
-    ? (isImgbbPage
-        ? '⚠️ This looks like an ImgBB <b>share page</b>, not a direct image. Use the <b>Direct link</b> (starts with <code>i.ibb.co</code>) from ImgBB.'
-        : '⚠️ URL may not be a direct image link. Make sure it ends in .png / .jpg / .gif / .webp or is a known direct image host.')
-    : '';
+  const looksLikeURL = /^https?:\\/\\//.test(val);
 
   title.textContent = currentKey;
   body.innerHTML = \`
@@ -556,8 +545,8 @@ function renderEditor() {
     <div class="field">
       <label>Value</label>
       <textarea id="ed-val">\${escHtml(val)}</textarea>
-      <p class="hint" id="url-hint">\${urlWarning || 'For image keys: paste a <strong>direct</strong> image URL (.png/.jpg/.gif/etc). ImgBB: use the <strong>Direct link</strong>, not the share page.'}</p>
-      <img id="img-preview" class="img-preview" \${looksLikeURL && isDirectImage ? 'src="'+escHtml(val)+'" style="display:block"' : ''}>
+      <p class="hint">Tip: paste an image or GIF URL and a preview will appear below.</p>
+      <img id="img-preview" class="img-preview" \${looksLikeURL ? 'src="'+escHtml(val)+'" style="display:block"' : ''}>
     </div>
     <div class="actions">
       <button class="btn-save" onclick="saveKey()">Save</button>
@@ -566,27 +555,10 @@ function renderEditor() {
   \`;
 
   document.getElementById('ed-val').addEventListener('input', function() {
-    const v    = this.value;
-    const img  = document.getElementById('img-preview');
-    const hint = document.getElementById('url-hint');
-    const isURL    = /^https?:\/\//.test(v);
-    const isDirect = /\.(png|jpe?g|gif|webp|svg|bmp)(\?.*)?$/i.test(v) ||
-                     /^https?:\/\/i\.ibb\.co\//i.test(v) ||
-                     /^https?:\/\/i\.imgur\.com\//i.test(v);
-    const isPage   = /^https?:\/\/ibb\.co\//i.test(v);
-    if (isURL && isDirect) {
-      img.src = v; img.style.display = 'block';
-      hint.innerHTML = '';
-    } else if (isURL && isPage) {
-      img.style.display = 'none';
-      hint.innerHTML = '⚠️ ImgBB <b>share page</b> detected. Copy the <b>Direct link</b> from ImgBB instead (starts with <code>i.ibb.co</code>).';
-    } else if (isURL) {
-      img.src = v; img.style.display = 'block';
-      hint.innerHTML = '⚠️ URL may not be a direct image — preview may be broken.';
-    } else {
-      img.style.display = 'none';
-      hint.innerHTML = 'For image keys: paste a <strong>direct</strong> image URL.';
-    }
+    const v = this.value;
+    const img = document.getElementById('img-preview');
+    if (/^https?:\\/\\//.test(v)) { img.src = v; img.style.display = 'block'; }
+    else { img.style.display = 'none'; }
   });
 }
 
